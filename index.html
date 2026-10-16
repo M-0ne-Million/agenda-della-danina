@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contatti Clienti</title>
+<meta name="description" content="Foglio contatti clienti: chi chiamare, quando, perché e con che esito. I dati restano sul dispositivo.">
+<meta name="theme-color" content="#1f7a4d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Contatti">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root {
+    --bg: #f4f5f2;
+    --sheet: #ffffff;
+    --ink: #1c211e;
+    --ink-2: #5b645f;
+    --line: #dde1dc;
+    --head: #eef1ec;
+    --head-ink: #3c4540;
+    --accent: #1f7a4d;
+    --accent-ink: #ffffff;
+    --focus: #1f7a4d;
+    --today: #fff7d6;
+    --late: #fdecea;
+    --late-ink: #b3261e;
+    --row-hover: #f7f9f6;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121513;
+      --sheet: #1a1e1c;
+      --ink: #e7ebe8;
+      --ink-2: #9aa49e;
+      --line: #2c322f;
+      --head: #222825;
+      --head-ink: #c8d0cb;
+      --accent: #3fae75;
+      --accent-ink: #0d1510;
+      --focus: #3fae75;
+      --today: #3a3418;
+      --late: #3b1d1b;
+      --late-ink: #ff8a80;
+      --row-hover: #1f2421;
+      --shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overscroll-behavior: none;
+  }
+
+  /* ---------- Toolbar ---------- */
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 12px 16px;
+  }
+  h1 { font-size: 20px; margin: 0 8px 0 0; letter-spacing: -.01em; white-space: nowrap; }
+  .grow { flex: 1 1 auto; }
+  button, .btn {
+    font: inherit; font-size: 15px; font-weight: 600;
+    min-height: 44px; padding: 0 16px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--sheet); color: var(--ink);
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer; white-space: nowrap;
+    transition: transform .08s ease, background .15s ease;
+  }
+  button:active, .btn:active { transform: scale(.97); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  button.ghost { background: transparent; }
+  .search {
+    flex: 1 1 220px; max-width: 360px;
+    min-height: 44px; padding: 0 14px;
+    border-radius: 10px; border: 1px solid var(--line);
+    background: var(--sheet); color: var(--ink); font: inherit; font-size: 16px;
+  }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 10px; }
+  .chip {
+    min-height: 36px; padding: 0 12px; font-size: 14px; font-weight: 500;
+    border-radius: 999px;
+  }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+  .chip .n { opacity: .6; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Sheet ---------- */
+  main {
+    flex: 1 1 auto; min-height: 0;
+    margin: 0 16px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--sheet); box-shadow: var(--shadow);
+    overflow: auto; -webkit-overflow-scrolling: touch;
+  }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 980px; table-layout: fixed; }
+  th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; }
+  th:last-child, td:last-child { border-right: 0; }
+  thead th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--head); color: var(--head-ink);
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+    text-align: left; height: 44px; padding: 0 12px;
+    user-select: none; -webkit-user-select: none; cursor: pointer;
+  }
+  thead th .arr { opacity: .35; margin-left: 4px; font-size: 11px; }
+  thead th[aria-sort="ascending"] .arr, thead th[aria-sort="descending"] .arr { opacity: 1; color: var(--accent); }
+  th.rn, td.rn {
+    width: 48px; text-align: center; color: var(--ink-2);
+    background: var(--head); font-size: 13px; font-variant-numeric: tabular-nums;
+    position: sticky; left: 0; z-index: 1;
+  }
+  thead th.rn { z-index: 3; cursor: default; padding: 0; }
+  th.act, td.act { width: 56px; text-align: center; cursor: default; }
+
+  tbody tr { transition: background .15s ease; }
+  tbody tr.today td:not(.rn) { background: var(--today); }
+  tbody tr.late td:not(.rn) { background: var(--late); }
+  tbody tr.late td.rn { color: var(--late-ink); font-weight: 700; }
+  tbody tr.flash td:not(.rn) { animation: flash 1.2s ease-out; }
+  @keyframes flash { from { background: color-mix(in srgb, var(--accent) 22%, transparent); } }
+
+  td input, td select {
+    display: block; width: 100%; height: 48px;
+    border: 0; margin: 0; padding: 0 12px;
+    background: transparent; color: inherit;
+    font: inherit; font-size: 16px; /* 16px evita lo zoom automatico su iOS */
+    border-radius: 0; outline: none;
+    -webkit-appearance: none; appearance: none;
+  }
+  td input[type="date"], td input[type="time"] { font-variant-numeric: tabular-nums; }
+  td input::placeholder { color: var(--ink-2); opacity: .45; }
+  td:focus-within:not(.rn):not(.act) { box-shadow: inset 0 0 0 2px var(--focus); position: relative; z-index: 1; }
+
+  td select.esito {
+    margin: 8px; height: 32px; width: calc(100% - 16px);
+    border-radius: 999px; padding: 0 28px 0 12px;
+    font-size: 14px; font-weight: 600;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+    background-size: 5px 5px; background-repeat: no-repeat;
+  }
+  .e-none      { background-color: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+  .e-todo      { background-color: #e3ecfb; color: #1d4b99; }
+  .e-callback  { background-color: #fff0d1; color: #8a5300; }
+  .e-noanswer  { background-color: #ececec; color: #4a4a4a; }
+  .e-appt      { background-color: #e6e1fa; color: #4b3aa0; }
+  .e-ok        { background-color: #dcf3e5; color: #17663f; }
+  .e-ko        { background-color: #fbe0de; color: #a02a22; }
+  @media (prefers-color-scheme: dark) {
+    .e-todo     { background-color: #1e2d4a; color: #a9c6ff; }
+    .e-callback { background-color: #3d2e10; color: #ffcf7a; }
+    .e-noanswer { background-color: #2e2e2e; color: #c8c8c8; }
+    .e-appt     { background-color: #2c2650; color: #c6bbff; }
+    .e-ok       { background-color: #173927; color: #8fe0b2; }
+    .e-ko       { background-color: #47201d; color: #ffaaa3; }
+  }
+
+  .del {
+    min-height: 40px; width: 40px; padding: 0; justify-content: center;
+    border: 0; background: transparent; color: var(--ink-2); font-size: 18px;
+  }
+  .del:active { color: var(--late-ink); }
+
+  .empty { padding: 48px 24px; text-align: center; color: var(--ink-2); }
+  .empty strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 6px; }
+
+  footer {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+    padding: 10px 16px 14px; color: var(--ink-2); font-size: 14px;
+  }
+  footer b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--line); }
+
+  /* ---------- Menu & toast ---------- */
+  .menu {
+    position: fixed; z-index: 20; min-width: 260px;
+    background: var(--sheet); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 6px;
+  }
+  .menu[hidden] { display: none; }
+  .menu button { width: 100%; border: 0; justify-content: flex-start; font-weight: 500; }
+  .menu button:hover { background: var(--row-hover); }
+  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 6px 4px; }
+  .menu .note { font-size: 12px; color: var(--ink-2); padding: 6px 12px 8px; line-height: 1.4; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 30;
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    background: var(--ink); color: var(--sheet);
+    border-radius: 12px; padding: 8px 8px 8px 16px;
+    display: flex; align-items: center; gap: 12px; font-size: 15px;
+    transition: opacity .2s ease, transform .2s ease;
+    max-width: calc(100vw - 32px);
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast button { min-height: 36px; background: transparent; color: inherit; border-color: color-mix(in srgb, var(--sheet) 35%, transparent); }
+  .toast button:empty { display: none; }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 18px; width: 100%; }
+    main { margin: 0 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Contatti Clienti</h1>
+  <input class="search" id="q" type="search" placeholder="Cerca nome, cognome, motivo…" autocomplete="off" aria-label="Cerca">
+  <span class="grow"></span>
+  <button class="primary" id="add">＋ Nuovo cliente</button>
+  <button id="more" aria-haspopup="menu" aria-label="Altre azioni">•••</button>
+</header>
+
+<div class="filters" id="filters" role="toolbar" aria-label="Filtri"></div>
+
+<main id="sheet">
+  <table>
+    <colgroup>
+      <col style="width:48px">
+      <col style="width:15%"><col style="width:15%">
+      <col style="width:160px"><col style="width:110px">
+      <col>
+      <col style="width:200px">
+      <col style="width:56px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="rn" aria-label="Riga"></th>
+        <th data-k="nome">Nome<span class="arr">↕</span></th>
+        <th data-k="cognome">Cognome<span class="arr">↕</span></th>
+        <th data-k="giorno">Giorno<span class="arr">↕</span></th>
+        <th data-k="orario">Orario<span class="arr">↕</span></th>
+        <th data-k="motivo">Motivo del contatto<span class="arr">↕</span></th>
+        <th data-k="esito">Esito<span class="arr">↕</span></th>
+        <th class="act" aria-label="Azioni"></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="empty" id="empty" hidden></div>
+</main>
+
+<footer id="stats"></footer>
+
+<div class="menu" id="menu" role="menu" hidden>
+  <button role="menuitem" data-act="csv">⬇︎ Esporta per Excel (.csv)</button>
+  <button role="menuitem" data-act="json">⬇︎ Backup completo (.json)</button>
+  <button role="menuitem" data-act="import">⬆︎ Importa backup o CSV…</button>
+  <hr>
+  <button role="menuitem" data-act="clear" style="color:var(--late-ink)">Cancella tutti i dati</button>
+  <p class="note">I dati sono salvati solo su questo dispositivo. Aggiungi l'app alla schermata Home (Condividi → Aggiungi a Home) e fai un backup ogni tanto.</p>
+</div>
+<input type="file" id="file" accept=".json,.csv,application/json,text/csv" hidden>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastBtn"></button></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const KEY = 'contatti-clienti:v1';
+  const FIELDS = ['nome', 'cognome', 'giorno', 'orario', 'motivo', 'esito'];
+  const ESITI = [
+    { v: '',             cls: 'e-none',     label: '—' },
+    { v: 'Da contattare', cls: 'e-todo',     label: 'Da contattare' },
+    { v: 'Richiamare',   cls: 'e-callback', label: 'Richiamare' },
+    { v: 'Non risponde', cls: 'e-noanswer', label: 'Non risponde' },
+    { v: 'Appuntamento', cls: 'e-appt',     label: 'Appuntamento' },
+    { v: 'Positivo',     cls: 'e-ok',       label: 'Positivo' },
+    { v: 'Negativo',     cls: 'e-ko',       label: 'Negativo' },
+  ];
+  const OPEN = new Set(['', 'Da contattare', 'Richiamare', 'Non risponde']);
+
+  const $ = (s) => document.querySelector(s);
+  const tbody = $('#rows');
+
+  // ---------- Storage ----------
+  let rows = load();
+  let saveTimer = null;
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      return Array.isArray(data) ? data.map(normalize) : [];
+    } catch { return []; }
+  }
+  function save() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNow, 250);
+  }
+  function saveNow() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    try { localStorage.setItem(KEY, JSON.stringify(rows)); }
+    catch { toast('Impossibile salvare: spazio esaurito o modalità privata.'); }
+  }
+  // All'uscita salva solo se c'è una modifica in sospeso (non sovrascrive dati di altre schede)
+  const flush = () => { if (saveTimer) saveNow(); };
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+  // App aperta in due schede: tieni allineati i dati
+  window.addEventListener('storage', (e) => {
+    if (e.key !== KEY || document.activeElement?.closest?.('#rows')) return;
+    rows = load(); render();
+  });
+  // Chiede al browser di non cancellare i dati in automatico
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function normalize(r) {
+    const o = { id: r.id || uid() };
+    for (const f of FIELDS) o[f] = (r[f] ?? '').toString();
+    o.creato = r.creato || new Date().toISOString();
+    o.modificato = r.modificato || o.creato;
+    return o;
+  }
+
+  // ---------- State ----------
+  let sort = { k: null, dir: 1 };
+  let filter = 'tutti';
+  let query = '';
+
+  const todayStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  function status(r) {
+    if (!r.giorno || !OPEN.has(r.esito)) return '';
+    const t = todayStr();
+    if (r.giorno === t) return 'today';
+    if (r.giorno < t) return 'late';
+    return '';
+  }
+
+  const FILTERS = [
+    { id: 'tutti',  label: 'Tutti',          test: () => true },
+    { id: 'oggi',   label: 'Da fare oggi',   test: r => status(r) === 'today' },
+    { id: 'ritardo',label: 'In ritardo',     test: r => status(r) === 'late' },
+    { id: 'aperti', label: 'Aperti',         test: r => OPEN.has(r.esito) },
+    { id: 'chiusi', label: 'Chiusi',         test: r => !OPEN.has(r.esito) },
+  ];
+
+  function visibleRows() {
+    const q = query.trim().toLowerCase();
+    const f = FILTERS.find(x => x.id === filter).test;
+    let list = rows.filter(r => f(r) && (!q || (r.nome + ' ' + r.cognome + ' ' + r.motivo + ' ' + r.esito).toLowerCase().includes(q)));
+    if (sort.k) {
+      const k = sort.k;
+      list = list.slice().sort((a, b) => {
+        let x = a[k], y = b[k];
+        if (k === 'giorno') { x = a.giorno + ' ' + a.orario; y = b.giorno + ' ' + b.orario; }
+        if (k === 'esito') { x = ESITI.findIndex(e => e.v === a.esito); y = ESITI.findIndex(e => e.v === b.esito); return (x - y) * sort.dir; }
+        if (!x && y) return 1;       // celle vuote sempre in fondo
+        if (x && !y) return -1;
+        return x.localeCompare(y, 'it', { sensitivity: 'base', numeric: true }) * sort.dir;
+      });
+    }
+    return list;
+  }
+
+  // ---------- Render ----------
+  function esitoCls(v) { return (ESITI.find(e => e.v === v) || ESITI[0]).cls; }
+
+  function rowEl(r, i) {
+    const tr = document.createElement('tr');
+    tr.dataset.id = r.id;
+    tr.className = status(r);
+    tr.innerHTML = `
+      <td class="rn">${i + 1}</td>
+      <td><input data-f="nome" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Nome"></td>
+      <td><input data-f="cognome" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Cognome"></td>
+      <td><input data-f="giorno" type="date"></td>
+      <td><input data-f="orario" type="time"></td>
+      <td><input data-f="motivo" autocapitalize="sentences" autocomplete="off" enterkeyhint="next" placeholder="Motivo del contatto"></td>
+      <td><select data-f="esito" class="esito"></select></td>
+      <td class="act"><button class="del" aria-label="Elimina riga">✕</button></td>`;
+    const sel = tr.querySelector('select');
+    for (const e of ESITI) sel.add(new Option(e.label, e.v));
+    for (const f of FIELDS) tr.querySelector(`[data-f="${f}"]`).value = r[f];
+    sel.className = 'esito ' + esitoCls(r.esito);
+    return tr;
+  }
+
+  function render() {
+    const list = visibleRows();
+    tbody.replaceChildren(...list.map(rowEl));
+    const empty = $('#empty');
+    if (!list.length) {
+      empty.hidden = false;
+      empty.innerHTML = rows.length
+        ? '<strong>Nessun risultato</strong>Prova a cambiare filtro o ricerca.'
+        : '<strong>Il foglio è vuoto</strong>Tocca “＋ Nuovo cliente” per aggiungere il primo contatto.';
+    } else empty.hidden = true;
+    document.querySelectorAll('thead th[data-k]').forEach(th => {
+      const on = th.dataset.k === sort.k;
+      th.setAttribute('aria-sort', on ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none');
+      th.querySelector('.arr').textContent = on ? (sort.dir === 1 ? '↑' : '↓') : '↕';
+    });
+    renderFilters();
+    renderStats();
+  }
+
+  function renderFilters() {
+    const box = $('#filters');
+    box.replaceChildren(...FILTERS.map(f => {
+      const b = document.createElement('button');
+      b.className = 'chip';
+      b.setAttribute('aria-pressed', String(filter === f.id));
+      b.innerHTML = `${f.label} <span class="n">${rows.filter(f.test).length}</span>`;
+      b.onclick = () => { filter = f.id; render(); };
+      return b;
+    }));
+  }
+
+  function renderStats() {
+    const today = rows.filter(r => status(r) === 'today').length;
+    const late = rows.filter(r => status(r) === 'late').length;
+    $('#stats').innerHTML = `
+      <span><b>${rows.length}</b> clienti</span>
+      <span><i class="dot" style="background:var(--today)"></i><b>${today}</b> da contattare oggi</span>
+      <span><i class="dot" style="background:var(--late)"></i><b>${late}</b> in ritardo</span>
+      <span class="grow"></span>
+      <span>Salvato su questo dispositivo</span>`;
+  }
+
+  // Aggiorna solo colori/contatori di una riga senza ridisegnare la tabella (non perde il focus)
+  function refreshRow(tr, r) {
+    tr.className = status(r);
+    renderFilters();
+    renderStats();
+  }
+
+  // ---------- Editing ----------
+  const byId = (id) => rows.find(r => r.id === id);
+
+  tbody.addEventListener('input', (e) => {
+    const el = e.target, tr = el.closest('tr');
+    const r = byId(tr.dataset.id);
+    if (!r) return;
+    r[el.dataset.f] = el.value;
+    r.modificato = new Date().toISOString();
+    if (el.tagName === 'SELECT') el.className = 'esito ' + esitoCls(el.value);
+    refreshRow(tr, r);
+    save();
+  });
+  tbody.addEventListener('change', (e) => {
+    if (e.target.tagName === 'SELECT' || e.target.type === 'date' || e.target.type === 'time') e.target.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  // Invio = cella sotto (come Excel). Sull'ultima riga crea un nuovo cliente.
+  tbody.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    e.preventDefault();
+    const f = e.target.dataset.f;
+    const next = e.target.closest('tr').nextElementSibling;
+    if (next) next.querySelector(`[data-f="${f}"]`).focus();
+    else if (f === 'nome' || f === 'cognome' || f === 'motivo') addRow(f);
+    else e.target.blur();
+  });
+
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.del');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const idx = rows.findIndex(r => r.id === tr.dataset.id);
+    if (idx < 0) return;
+    const [removed] = rows.splice(idx, 1);
+    saveNow(); render();
+    const name = [removed.nome, removed.cognome].filter(Boolean).join(' ') || 'Riga';
+    toast(`${name} eliminato`, 'Annulla', () => {
+      rows.splice(Math.min(idx, rows.length), 0, removed);
+      saveNow(); render();
+    });
+  });
+
+  function addRow(focusField = 'nome') {
+    const r = normalize({});
+    rows.push(r);
+    saveNow();
+    sort = { k: null, dir: 1 }; filter = 'tutti'; query = ''; $('#q').value = '';
+    render();
+    const tr = tbody.querySelector(`tr[data-id="${r.id}"]`);
+    tr.classList.add('flash');
+    tr.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    tr.querySelector(`[data-f="${focusField}"]`).focus({ preventScroll: true });
+  }
+  $('#add').onclick = () => addRow();
+
+  // Righe completamente vuote non servono: vengono tolte quando si lascia l'app o si riordina
+  function pruneEmpty() {
+    const before = rows.length;
+    rows = rows.filter(r => FIELDS.some(f => r[f]));
+    if (rows.length !== before) saveNow();
+  }
+
+  document.querySelector('thead').addEventListener('click', (e) => {
+    const th = e.target.closest('th[data-k]');
+    if (!th) return;
+    const k = th.dataset.k;
+    if (sort.k !== k) sort = { k, dir: 1 };
+    else if (sort.dir === 1) sort.dir = -1;
+    else sort = { k: null, dir: 1 };
+    pruneEmpty();
+    render();
+  });
+
+  $('#q').addEventListener('input', (e) => { query = e.target.value; render(); });
+
+  // ---------- Menu ----------
+  const menu = $('#menu');
+  $('#more').onclick = (e) => {
+    e.stopPropagation();
+    if (!menu.hidden) return closeMenu();
+    const b = e.currentTarget.getBoundingClientRect();
+    menu.hidden = false;
+    const w = menu.offsetWidth;
+    menu.style.top = (b.bottom + 6) + 'px';
+    menu.style.left = Math.max(8, Math.min(b.right - w, innerWidth - w - 8)) + 'px';
+  };
+  function closeMenu() { menu.hidden = true; }
+  document.addEventListener('click', (e) => { if (!menu.contains(e.target)) closeMenu(); });
+
+  menu.addEventListener('click', (e) => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (!act) return;
+    closeMenu();
+    if (act === 'csv') exportCSV();
+    if (act === 'json') exportJSON();
+    if (act === 'import') $('#file').click();
+    if (act === 'clear') clearAll();
+  });
+
+  // ---------- Export / Import ----------
+  const stamp = () => todayStr();
+  const COLS = [['nome', 'Nome'], ['cognome', 'Cognome'], ['giorno', 'Giorno'], ['orario', 'Orario'], ['motivo', 'Motivo'], ['esito', 'Esito']];
+
+  function itDate(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; }
+  function isoDate(s) {
+    s = (s || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
+    if (!m) return '';
+    const y = m[3].length === 2 ? '20' + m[3] : m[3];
+    return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  }
+
+  function exportCSV() {
+    pruneEmpty();
+    // Punto e virgola + BOM UTF-8: Excel in italiano lo apre già diviso in colonne con gli accenti corretti
+    const esc = (v) => /[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+    const lines = [COLS.map(c => c[1]).join(';')];
+    for (const r of rows) lines.push(COLS.map(([k]) => esc(k === 'giorno' ? itDate(r[k]) : r[k])).join(';'));
+    share(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `contatti-clienti-${stamp()}.csv`);
+  }
+  function exportJSON() {
+    pruneEmpty();
+    const data = { app: 'contatti-clienti', versione: 1, esportato: new Date().toISOString(), righe: rows };
+    share(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `contatti-clienti-backup-${stamp()}.json`);
+  }
+
+  async function share(blob, name) {
+    const file = new File([blob], name, { type: blob.type });
+    // Su iPad il foglio di condivisione permette di salvare in File, inviare via Mail, AirDrop…
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: name }); return; }
+      catch (err) { if (err.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  function parseCSV(text) {
+    text = text.replace(/^﻿/, '');
+    const first = text.split(/\r?\n/, 1)[0];
+    const sep = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ';' : ',';
+    const out = []; let row = [], cell = '', q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+        else if (c === '"') q = false;
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === sep) { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); out.push(row); row = []; cell = '';
+      } else cell += c;
+    }
+    if (cell || row.length) { row.push(cell); out.push(row); }
+    if (!out.length) return [];
+    const head = out.shift().map(h => h.trim().toLowerCase());
+    const idx = COLS.map(([k, label]) => head.findIndex(h => h === k || h === label.toLowerCase() || h.startsWith(k)));
+    return out.filter(r => r.some(c => c.trim())).map(r => {
+      const o = {};
+      COLS.forEach(([k], j) => { o[k] = idx[j] >= 0 ? (r[idx[j]] || '').trim() : ''; });
+      o.giorno = isoDate(o.giorno);
+      const t = o.orario.match(/^(\d{1,2})[:.](\d{2})/);
+      o.orario = t ? `${t[1].padStart(2, '0')}:${t[2]}` : '';
+      return normalize(o);
+    });
+  }
+
+  $('#file').addEventListener('change', async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    let incoming = [];
+    try {
+      const text = await f.text();
+      if (/\.json$/i.test(f.name) || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+        const data = JSON.parse(text);
+        incoming = (Array.isArray(data) ? data : data.righe || []).map(normalize);
+      } else incoming = parseCSV(text);
+    } catch { return toast('File non valido: impossibile leggerlo.'); }
+    if (!incoming.length) return toast('Nessuna riga trovata nel file.');
+    const ids = new Set(rows.map(r => r.id));
+    const fresh = incoming.filter(r => !ids.has(r.id));
+    const dup = incoming.length - fresh.length;
+    if (!confirm(`Aggiungere ${fresh.length} clienti al foglio?` + (dup ? `\n(${dup} già presenti verranno saltati)` : ''))) return;
+    rows.push(...fresh);
+    saveNow(); render();
+    toast(`${fresh.length} clienti importati`);
+  });
+
+  function clearAll() {
+    if (!rows.length) return toast('Il foglio è già vuoto.');
+    if (!confirm(`Cancellare tutti i ${rows.length} clienti da questo dispositivo?\nConsiglio: prima fai un backup.`)) return;
+    const backup = rows;
+    rows = []; saveNow(); render();
+    toast('Tutti i dati cancellati', 'Annulla', () => { rows = backup; saveNow(); render(); }, 8000);
+  }
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function toast(msg, actLabel = '', act = null, ms = 5000) {
+    const t = $('#toast'), b = $('#toastBtn');
+    $('#toastMsg').textContent = msg;
+    b.textContent = actLabel;
+    b.onclick = () => { t.classList.remove('show'); act && act(); };
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+  }
+
+  // Cambio giorno con l'app aperta: aggiorna evidenziazioni oggi/ritardo
+  let lastDay = todayStr();
+  setInterval(() => { if (todayStr() !== lastDay) { lastDay = todayStr(); render(); } }, 60000);
+
+  pruneEmpty();
+  render();
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
