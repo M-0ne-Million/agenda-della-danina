@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Contatti Clienti</title>
 <meta name="description" content="Foglio contatti clienti: chi chiamare, quando, perché e con che esito. I dati restano sul dispositivo.">
-<meta name="theme-color" content="#1f7a4d">
+<meta name="theme-color" content="#1d5fd1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,38 +15,42 @@
 <link rel="manifest" href="manifest.webmanifest">
 <style>
   :root {
-    --bg: #f4f5f2;
+    --bg: #f2f5fa;
     --sheet: #ffffff;
-    --ink: #1c211e;
-    --ink-2: #5b645f;
-    --line: #dde1dc;
-    --head: #eef1ec;
-    --head-ink: #3c4540;
-    --accent: #1f7a4d;
+    --ink: #17202f;
+    --ink-2: #5a6578;
+    --line: #d9e0eb;
+    --head: #e9eff8;
+    --head-ink: #34445e;
+    --day: #f5f8fd;
+    --accent: #1d5fd1;
+    --accent-soft: #e3ecfc;
     --accent-ink: #ffffff;
-    --focus: #1f7a4d;
-    --today: #fff7d6;
+    --focus: #1d5fd1;
+    --today: #eaf1fe;
     --late: #fdecea;
     --late-ink: #b3261e;
-    --row-hover: #f7f9f6;
-    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+    --row-hover: #f5f8fd;
+    --shadow: 0 1px 2px rgba(16,32,64,.06), 0 4px 16px rgba(16,32,64,.06);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #121513;
-      --sheet: #1a1e1c;
-      --ink: #e7ebe8;
-      --ink-2: #9aa49e;
-      --line: #2c322f;
-      --head: #222825;
-      --head-ink: #c8d0cb;
-      --accent: #3fae75;
-      --accent-ink: #0d1510;
-      --focus: #3fae75;
-      --today: #3a3418;
-      --late: #3b1d1b;
+      --bg: #0e131d;
+      --sheet: #151b27;
+      --ink: #e6ebf3;
+      --ink-2: #97a3b6;
+      --line: #263045;
+      --head: #1b2333;
+      --head-ink: #c4cfdf;
+      --day: #18202e;
+      --accent: #5b9bff;
+      --accent-soft: #1d2d4d;
+      --accent-ink: #0a1222;
+      --focus: #5b9bff;
+      --today: #172540;
+      --late: #3b1d1f;
       --late-ink: #ff8a80;
-      --row-hover: #1f2421;
+      --row-hover: #1b2333;
       --shadow: 0 1px 2px rgba(0,0,0,.4);
     }
   }
@@ -79,20 +83,33 @@
   }
   button:active, .btn:active { transform: scale(.97); }
   button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
-  button.ghost { background: transparent; }
   .search {
     flex: 1 1 220px; max-width: 360px;
     min-height: 44px; padding: 0 14px;
     border-radius: 10px; border: 1px solid var(--line);
     background: var(--sheet); color: var(--ink); font: inherit; font-size: 16px;
   }
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 10px; }
+  .search:focus, .order select:focus { outline: 2px solid var(--focus); outline-offset: -1px; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 0 16px 10px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
   .chip {
     min-height: 36px; padding: 0 12px; font-size: 14px; font-weight: 500;
     border-radius: 999px;
   }
-  .chip[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
-  .chip .n { opacity: .6; font-variant-numeric: tabular-nums; }
+  .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .chip .n { opacity: .65; font-variant-numeric: tabular-nums; }
+  .order { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
+  .order select {
+    font: inherit; font-size: 16px; font-weight: 600; color: var(--ink);
+    min-height: 36px; padding: 0 32px 0 12px;
+    border-radius: 999px; border: 1px solid var(--line); background-color: var(--sheet);
+    -webkit-appearance: none; appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+    background-size: 5px 5px; background-repeat: no-repeat;
+  }
+  #foldAll { min-height: 36px; font-size: 14px; font-weight: 500; border-radius: 999px; padding: 0 12px; }
 
   /* ---------- Sheet ---------- */
   main {
@@ -105,28 +122,61 @@
   th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; }
   th:last-child, td:last-child { border-right: 0; }
   thead th {
-    position: sticky; top: 0; z-index: 2;
+    position: sticky; top: 0; z-index: 3;
     background: var(--head); color: var(--head-ink);
     font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
     text-align: left; height: 44px; padding: 0 12px;
-    user-select: none; -webkit-user-select: none; cursor: pointer;
   }
-  thead th .arr { opacity: .35; margin-left: 4px; font-size: 11px; }
-  thead th[aria-sort="ascending"] .arr, thead th[aria-sort="descending"] .arr { opacity: 1; color: var(--accent); }
   th.rn, td.rn {
     width: 48px; text-align: center; color: var(--ink-2);
     background: var(--head); font-size: 13px; font-variant-numeric: tabular-nums;
     position: sticky; left: 0; z-index: 1;
   }
-  thead th.rn { z-index: 3; cursor: default; padding: 0; }
-  th.act, td.act { width: 56px; text-align: center; cursor: default; }
+  thead th.rn { z-index: 4; padding: 0; }
+  th.act, td.act { width: 56px; text-align: center; }
 
-  tbody tr { transition: background .15s ease; }
+  tbody tr:not(.day) { scroll-margin-top: 96px; }
   tbody tr.today td:not(.rn) { background: var(--today); }
   tbody tr.late td:not(.rn) { background: var(--late); }
   tbody tr.late td.rn { color: var(--late-ink); font-weight: 700; }
-  tbody tr.flash td:not(.rn) { animation: flash 1.2s ease-out; }
-  @keyframes flash { from { background: color-mix(in srgb, var(--accent) 22%, transparent); } }
+  tbody tr.flash td:not(.rn) { animation: flash 1.4s ease-out; }
+  @keyframes flash { from { background: color-mix(in srgb, var(--accent) 25%, transparent); } }
+
+  /* Intestazione del giorno (comprimibile) */
+  tr.day td {
+    position: sticky; top: 44px; z-index: 2;
+    background: var(--day); border-right: 0;
+  }
+  tr.day.is-today td { background: var(--accent-soft); }
+  .day-btn {
+    display: block; width: 100%; min-height: 44px; padding: 0;
+    border: 0; border-radius: 0; background: transparent; text-align: left;
+  }
+  .day-btn:active { transform: none; background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .day-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .day-in {
+    position: sticky; left: 0;
+    display: inline-flex; align-items: center; gap: 10px;
+    min-height: 44px; padding: 0 16px 0 14px;
+  }
+  .chev {
+    display: inline-grid; place-items: center; width: 22px; height: 22px;
+    border-radius: 6px; color: var(--ink-2); font-size: 18px; line-height: 1;
+    transition: transform .2s cubic-bezier(.2,.8,.2,1);
+  }
+  .day-btn[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  .day-name { font-weight: 700; font-size: 16px; }
+  tr.day.is-today .day-name { color: var(--accent); }
+  tr.day.is-past .day-name { color: var(--ink-2); }
+  .day-rel { color: var(--ink-2); font-weight: 500; font-size: 14px; }
+  .pill {
+    font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    background: var(--head); color: var(--head-ink); font-variant-numeric: tabular-nums;
+  }
+  .pill.late { background: var(--late); color: var(--late-ink); }
+  .pill.open { background: var(--accent-soft); color: var(--accent); }
+  .day-btn:disabled { cursor: default; opacity: 1; }
+  .day-btn:disabled .chev { visibility: hidden; }
 
   td input, td select {
     display: block; width: 100%; height: 48px;
@@ -138,7 +188,7 @@
   }
   td input[type="date"], td input[type="time"] { font-variant-numeric: tabular-nums; }
   td input::placeholder { color: var(--ink-2); opacity: .45; }
-  td:focus-within:not(.rn):not(.act) { box-shadow: inset 0 0 0 2px var(--focus); position: relative; z-index: 1; }
+  td:focus-within:not(.rn):not(.act):not([colspan]) { box-shadow: inset 0 0 0 2px var(--focus); position: relative; z-index: 1; }
 
   td select.esito {
     margin: 8px; height: 32px; width: calc(100% - 16px);
@@ -184,7 +234,7 @@
   .menu {
     position: fixed; z-index: 20; min-width: 260px;
     background: var(--sheet); border: 1px solid var(--line); border-radius: 14px;
-    box-shadow: 0 12px 40px rgba(0,0,0,.18); padding: 6px;
+    box-shadow: 0 12px 40px rgba(10,20,40,.18); padding: 6px;
   }
   .menu[hidden] { display: none; }
   .menu button { width: 100%; border: 0; justify-content: flex-start; font-weight: 500; }
@@ -208,6 +258,7 @@
   @media (max-width: 600px) {
     h1 { font-size: 18px; width: 100%; }
     main { margin: 0 8px; }
+    .filters { padding: 0 8px 10px; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -224,7 +275,18 @@
   <button id="more" aria-haspopup="menu" aria-label="Altre azioni">•••</button>
 </header>
 
-<div class="filters" id="filters" role="toolbar" aria-label="Filtri"></div>
+<div class="filters">
+  <div class="chips" id="chips" role="toolbar" aria-label="Filtri"></div>
+  <span class="grow"></span>
+  <label class="order">Ordina
+    <select id="order">
+      <option value="vicini">Più vicini a oggi</option>
+      <option value="asc">Dal più vecchio</option>
+      <option value="desc">Dal più recente</option>
+    </select>
+  </label>
+  <button id="foldAll"></button>
+</div>
 
 <main id="sheet">
   <table>
@@ -239,12 +301,12 @@
     <thead>
       <tr>
         <th class="rn" aria-label="Riga"></th>
-        <th data-k="nome">Nome<span class="arr">↕</span></th>
-        <th data-k="cognome">Cognome<span class="arr">↕</span></th>
-        <th data-k="giorno">Giorno<span class="arr">↕</span></th>
-        <th data-k="orario">Orario<span class="arr">↕</span></th>
-        <th data-k="motivo">Motivo del contatto<span class="arr">↕</span></th>
-        <th data-k="esito">Esito<span class="arr">↕</span></th>
+        <th>Nome</th>
+        <th>Cognome</th>
+        <th>Giorno</th>
+        <th>Orario</th>
+        <th>Motivo del contatto</th>
+        <th>Esito</th>
         <th class="act" aria-label="Azioni"></th>
       </tr>
     </thead>
@@ -272,6 +334,7 @@
   'use strict';
 
   const KEY = 'contatti-clienti:v1';
+  const UIKEY = 'contatti-clienti:ui';
   const FIELDS = ['nome', 'cognome', 'giorno', 'orario', 'motivo', 'esito'];
   const ESITI = [
     { v: '',             cls: 'e-none',     label: '—' },
@@ -320,6 +383,14 @@
   // Chiede al browser di non cancellare i dati in automatico
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
+  // Preferenze di visualizzazione (ordine, giorni compressi)
+  let ui = loadUI();
+  function loadUI() {
+    const def = { order: 'vicini', collapsed: {} };
+    try { return Object.assign(def, JSON.parse(localStorage.getItem(UIKEY) || '{}')); } catch { return def; }
+  }
+  function saveUI() { try { localStorage.setItem(UIKEY, JSON.stringify(ui)); } catch {} }
+
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
   function normalize(r) {
     const o = { id: r.id || uid() };
@@ -330,7 +401,6 @@
   }
 
   // ---------- State ----------
-  let sort = { k: null, dir: 1 };
   let filter = 'tutti';
   let query = '';
 
@@ -354,33 +424,89 @@
     { id: 'chiusi', label: 'Chiusi',         test: r => !OPEN.has(r.esito) },
   ];
 
-  function visibleRows() {
+  function filteredRows() {
     const q = query.trim().toLowerCase();
     const f = FILTERS.find(x => x.id === filter).test;
-    let list = rows.filter(r => f(r) && (!q || (r.nome + ' ' + r.cognome + ' ' + r.motivo + ' ' + r.esito).toLowerCase().includes(q)));
-    if (sort.k) {
-      const k = sort.k;
-      list = list.slice().sort((a, b) => {
-        let x = a[k], y = b[k];
-        if (k === 'giorno') { x = a.giorno + ' ' + a.orario; y = b.giorno + ' ' + b.orario; }
-        if (k === 'esito') { x = ESITI.findIndex(e => e.v === a.esito); y = ESITI.findIndex(e => e.v === b.esito); return (x - y) * sort.dir; }
-        if (!x && y) return 1;       // celle vuote sempre in fondo
-        if (x && !y) return -1;
-        return x.localeCompare(y, 'it', { sensitivity: 'base', numeric: true }) * sort.dir;
-      });
+    return rows.filter(r => f(r) && (!q || (r.nome + ' ' + r.cognome + ' ' + r.motivo + ' ' + r.esito).toLowerCase().includes(q)));
+  }
+
+  // ---------- Raggruppamento per giorno ----------
+  const byTime = (a, b) => (!a.orario) - (!b.orario) || a.orario.localeCompare(b.orario) || a.creato.localeCompare(b.creato);
+
+  function groupRows(list) {
+    const map = new Map();
+    for (const r of list) {
+      const k = r.giorno || '';
+      if (!map.has(k)) map.set(k, []);
+      map.get(k).push(r);
     }
-    return list;
+    for (const arr of map.values()) arr.sort(byTime);
+    const t = todayStr();
+    const keys = [...map.keys()].sort((a, b) => {
+      if (!a) return -1;                       // "Senza data" sempre in cima: va completata
+      if (!b) return 1;
+      if (ui.order === 'asc') return a < b ? -1 : 1;
+      if (ui.order === 'desc') return a < b ? 1 : -1;
+      // Più vicini a oggi: oggi e i prossimi giorni in ordine, poi i giorni passati dal più recente
+      const fa = a >= t, fb = b >= t;
+      if (fa !== fb) return fa ? -1 : 1;
+      return (fa ? 1 : -1) * (a < b ? -1 : 1);
+    });
+    return keys.map(day => ({ day, rows: map.get(day) }));
+  }
+
+  // Compresso? Scelta dell'utente se c'è; altrimenti sono chiusi solo i giorni passati già tutti conclusi
+  function isCollapsed(g) {
+    if (query.trim()) return false;
+    if (g.day in ui.collapsed) return ui.collapsed[g.day];
+    return !!g.day && g.day < todayStr() && g.rows.every(r => !OPEN.has(r.esito));
+  }
+
+  const fmt = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+  const fmtY = new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function dayInfo(day) {
+    if (!day) return { name: 'Senza data', rel: 'da pianificare', diff: null };
+    const [y, m, d] = day.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const diff = Math.round((date - now) / 864e5);
+    const long = cap((y === now.getFullYear() ? fmt : fmtY).format(date));
+    const near = { 0: 'Oggi', 1: 'Domani', '-1': 'Ieri' }[diff];
+    if (near) return { name: near, rel: long, diff };
+    return { name: long, rel: diff > 0 ? `tra ${diff} giorni` : `${-diff} giorni fa`, diff };
   }
 
   // ---------- Render ----------
   function esitoCls(v) { return (ESITI.find(e => e.v === v) || ESITI[0]).cls; }
 
-  function rowEl(r, i) {
+  function dayEl(g, collapsed) {
+    const info = dayInfo(g.day);
+    const late = g.rows.filter(r => status(r) === 'late').length;
+    const open = g.rows.filter(r => OPEN.has(r.esito)).length;
+    const tr = document.createElement('tr');
+    tr.className = 'day' + (info.diff === 0 ? ' is-today' : '') + (info.diff < 0 ? ' is-past' : '');
+    tr.dataset.day = g.day;
+    tr.innerHTML = `<td colspan="8"><button class="day-btn" aria-expanded="${!collapsed}"${query.trim() ? ' disabled' : ''}>
+      <span class="day-in">
+        <span class="chev" aria-hidden="true">›</span>
+        <span class="day-name"></span>
+        <span class="day-rel"></span>
+        <span class="pill">${g.rows.length} ${g.rows.length === 1 ? 'contatto' : 'contatti'}</span>
+        ${late ? `<span class="pill late">${late} in ritardo</span>` : open && info.diff !== null && info.diff >= 0 ? `<span class="pill open">${open} da fare</span>` : ''}
+      </span></button></td>`;
+    tr.querySelector('.day-name').textContent = info.name;
+    tr.querySelector('.day-rel').textContent = info.rel;
+    return tr;
+  }
+
+  function rowEl(r, n) {
     const tr = document.createElement('tr');
     tr.dataset.id = r.id;
     tr.className = status(r);
     tr.innerHTML = `
-      <td class="rn">${i + 1}</td>
+      <td class="rn">${n}</td>
       <td><input data-f="nome" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Nome"></td>
       <td><input data-f="cognome" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Cognome"></td>
       <td><input data-f="giorno" type="date"></td>
@@ -395,9 +521,18 @@
     return tr;
   }
 
+  let groups = [];
   function render() {
-    const list = visibleRows();
-    tbody.replaceChildren(...list.map(rowEl));
+    const list = filteredRows();
+    groups = groupRows(list);
+    const out = [];
+    let n = 0;
+    for (const g of groups) {
+      const c = isCollapsed(g);
+      out.push(dayEl(g, c));
+      for (const r of g.rows) { n++; if (!c) out.push(rowEl(r, n)); }
+    }
+    tbody.replaceChildren(...out);
     const empty = $('#empty');
     if (!list.length) {
       empty.hidden = false;
@@ -405,18 +540,17 @@
         ? '<strong>Nessun risultato</strong>Prova a cambiare filtro o ricerca.'
         : '<strong>Il foglio è vuoto</strong>Tocca “＋ Nuovo cliente” per aggiungere il primo contatto.';
     } else empty.hidden = true;
-    document.querySelectorAll('thead th[data-k]').forEach(th => {
-      const on = th.dataset.k === sort.k;
-      th.setAttribute('aria-sort', on ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none');
-      th.querySelector('.arr').textContent = on ? (sort.dir === 1 ? '↑' : '↓') : '↕';
-    });
+    $('#order').value = ui.order;
+    const anyOpen = groups.some(g => !isCollapsed(g));
+    const fb = $('#foldAll');
+    fb.textContent = anyOpen ? 'Comprimi tutti' : 'Espandi tutti';
+    fb.disabled = !groups.length || !!query.trim();
     renderFilters();
     renderStats();
   }
 
   function renderFilters() {
-    const box = $('#filters');
-    box.replaceChildren(...FILTERS.map(f => {
+    $('#chips').replaceChildren(...FILTERS.map(f => {
       const b = document.createElement('button');
       b.className = 'chip';
       b.setAttribute('aria-pressed', String(filter === f.id));
@@ -437,28 +571,58 @@
       <span>Salvato su questo dispositivo</span>`;
   }
 
-  // Aggiorna solo colori/contatori di una riga senza ridisegnare la tabella (non perde il focus)
+  function headerOf(tr) {
+    let h = tr.previousElementSibling;
+    while (h && !h.classList.contains('day')) h = h.previousElementSibling;
+    return h;
+  }
+
+  // Aggiorna colori, intestazione del giorno e contatori senza ridisegnare la tabella (non perde il focus)
   function refreshRow(tr, r) {
     tr.className = status(r);
+    const h = headerOf(tr);
+    if (h) {
+      const day = h.dataset.day;
+      const g = { day, rows: filteredRows().filter(x => (x.giorno || '') === day && x.id !== r.id).concat(r) };
+      h.replaceWith(dayEl(g, false));
+    }
     renderFilters();
     renderStats();
   }
 
   // ---------- Editing ----------
   const byId = (id) => rows.find(r => r.id === id);
+  let moved = null; // riga a cui è cambiato giorno/orario: va riposizionata quando si esce dal campo
 
-  tbody.addEventListener('input', (e) => {
+  function onEdit(e) {
     const el = e.target, tr = el.closest('tr');
+    if (!el.dataset.f || !tr) return;
     const r = byId(tr.dataset.id);
-    if (!r) return;
+    if (!r || r[el.dataset.f] === el.value) return;
     r[el.dataset.f] = el.value;
     r.modificato = new Date().toISOString();
     if (el.tagName === 'SELECT') el.className = 'esito ' + esitoCls(el.value);
+    if (el.dataset.f === 'giorno' || el.dataset.f === 'orario') moved = r.id;
     refreshRow(tr, r);
     save();
-  });
-  tbody.addEventListener('change', (e) => {
-    if (e.target.tagName === 'SELECT' || e.target.type === 'date' || e.target.type === 'time') e.target.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  tbody.addEventListener('input', onEdit);
+  tbody.addEventListener('change', onEdit);
+
+  tbody.addEventListener('focusout', (e) => {
+    const f = e.target.dataset?.f;
+    if (!moved || (f !== 'giorno' && f !== 'orario')) return;
+    const id = moved; moved = null;
+    const next = e.relatedTarget, nextId = next?.closest?.('tr')?.dataset.id, nextF = next?.dataset?.f;
+    const r = byId(id);
+    if (r) ui.collapsed[r.giorno] = false, saveUI(); // il giorno di destinazione si apre per mostrare la riga
+    render();
+    const tr = tbody.querySelector(`tr[data-id="${id}"]`);
+    if (tr) {
+      tr.classList.add('flash');
+      if (!nextId || nextId === id) tr.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    if (nextId && nextF) tbody.querySelector(`tr[data-id="${nextId}"] [data-f="${nextF}"]`)?.focus({ preventScroll: nextId === id });
   });
 
   // Invio = cella sotto (come Excel). Sull'ultima riga crea un nuovo cliente.
@@ -466,13 +630,21 @@
     if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
     e.preventDefault();
     const f = e.target.dataset.f;
-    const next = e.target.closest('tr').nextElementSibling;
+    let next = e.target.closest('tr').nextElementSibling;
+    while (next && next.classList.contains('day')) next = next.nextElementSibling;
     if (next) next.querySelector(`[data-f="${f}"]`).focus();
     else if (f === 'nome' || f === 'cognome' || f === 'motivo') addRow(f);
     else e.target.blur();
   });
 
   tbody.addEventListener('click', (e) => {
+    const day = e.target.closest('.day-btn');
+    if (day) {
+      const d = day.closest('tr').dataset.day;
+      ui.collapsed[d] = day.getAttribute('aria-expanded') === 'true';
+      saveUI(); render();
+      return;
+    }
     const btn = e.target.closest('.del');
     if (!btn) return;
     const tr = btn.closest('tr');
@@ -491,7 +663,8 @@
     const r = normalize({});
     rows.push(r);
     saveNow();
-    sort = { k: null, dir: 1 }; filter = 'tutti'; query = ''; $('#q').value = '';
+    filter = 'tutti'; query = ''; $('#q').value = '';
+    ui.collapsed[''] = false;
     render();
     const tr = tbody.querySelector(`tr[data-id="${r.id}"]`);
     tr.classList.add('flash');
@@ -500,24 +673,19 @@
   }
   $('#add').onclick = () => addRow();
 
-  // Righe completamente vuote non servono: vengono tolte quando si lascia l'app o si riordina
+  // Righe completamente vuote non servono: vengono tolte all'apertura e prima di esportare
   function pruneEmpty() {
     const before = rows.length;
     rows = rows.filter(r => FIELDS.some(f => r[f]));
     if (rows.length !== before) saveNow();
   }
 
-  document.querySelector('thead').addEventListener('click', (e) => {
-    const th = e.target.closest('th[data-k]');
-    if (!th) return;
-    const k = th.dataset.k;
-    if (sort.k !== k) sort = { k, dir: 1 };
-    else if (sort.dir === 1) sort.dir = -1;
-    else sort = { k: null, dir: 1 };
-    pruneEmpty();
-    render();
-  });
-
+  $('#order').addEventListener('change', (e) => { ui.order = e.target.value; saveUI(); render(); });
+  $('#foldAll').onclick = () => {
+    const collapse = groups.some(g => !isCollapsed(g));
+    for (const g of groups) ui.collapsed[g.day] = collapse;
+    saveUI(); render();
+  };
   $('#q').addEventListener('input', (e) => { query = e.target.value; render(); });
 
   // ---------- Menu ----------
@@ -563,7 +731,8 @@
     // Punto e virgola + BOM UTF-8: Excel in italiano lo apre già diviso in colonne con gli accenti corretti
     const esc = (v) => /[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
     const lines = [COLS.map(c => c[1]).join(';')];
-    for (const r of rows) lines.push(COLS.map(([k]) => esc(k === 'giorno' ? itDate(r[k]) : r[k])).join(';'));
+    const sorted = rows.slice().sort((a, b) => (a.giorno || '9999').localeCompare(b.giorno || '9999') || byTime(a, b));
+    for (const r of sorted) lines.push(COLS.map(([k]) => esc(k === 'giorno' ? itDate(r[k]) : r[k])).join(';'));
     share(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `contatti-clienti-${stamp()}.csv`);
   }
   function exportJSON() {
@@ -659,9 +828,11 @@
     toastTimer = setTimeout(() => t.classList.remove('show'), ms);
   }
 
-  // Cambio giorno con l'app aperta: aggiorna evidenziazioni oggi/ritardo
+  // Cambio giorno con l'app aperta: aggiorna Oggi/Domani e le evidenziazioni
   let lastDay = todayStr();
-  setInterval(() => { if (todayStr() !== lastDay) { lastDay = todayStr(); render(); } }, 60000);
+  setInterval(() => {
+    if (todayStr() !== lastDay && !document.activeElement?.closest?.('#rows')) { lastDay = todayStr(); render(); }
+  }, 60000);
 
   pruneEmpty();
   render();

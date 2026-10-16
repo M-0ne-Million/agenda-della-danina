@@ -1,5 +1,5 @@
 // Rete prima, cache come riserva: online prendi sempre l'ultima versione, offline l'app funziona lo stesso.
-const CACHE = 'contatti-v1';
+const CACHE = 'contatti-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
