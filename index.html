@@ -99,6 +99,7 @@
   }
   .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
   .chip .n { opacity: .65; font-variant-numeric: tabular-nums; }
+  .view { display: flex; gap: 8px; align-items: center; margin-left: auto; }
   .order { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
   .order select {
     font: inherit; font-size: 16px; font-weight: 600; color: var(--ink);
@@ -118,7 +119,7 @@
     background: var(--sheet); box-shadow: var(--shadow);
     overflow: auto; -webkit-overflow-scrolling: touch;
   }
-  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 980px; table-layout: fixed; }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1140px; table-layout: fixed; }
   th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; }
   th:last-child, td:last-child { border-right: 0; }
   thead th {
@@ -187,6 +188,22 @@
     -webkit-appearance: none; appearance: none;
   }
   td input[type="date"], td input[type="time"] { font-variant-numeric: tabular-nums; }
+
+  /* Celle data + ora affiancate */
+  .dt-in { display: flex; }
+  .dt-in input { padding: 0 8px; }
+  .dt-in input[type="date"] { flex: 1 1 auto; min-width: 0; padding-left: 10px; }
+  .dt-in input[type="time"] { flex: 0 0 88px; border-left: 1px dashed var(--line); }
+  td.next .na { display: block; padding: 0 12px; line-height: 48px; color: var(--ink-2); opacity: .5; }
+  tr:not(.need) td.next .dt-in { display: none; }
+  tr.need td.next .na { display: none; }
+  /* Esito che richiede una data ma non ancora inserita */
+  tr.need:not(.via-next) td.next { outline: 2px dashed var(--accent); outline-offset: -5px; }
+  /* La data che decide in quale giorno sta la riga */
+  tr.via-next td.next input { color: var(--accent); font-weight: 600; }
+  tr.via-next td.first input { color: var(--ink-2); }
+  .chip .sw { width: 10px; height: 10px; border-radius: 50%; box-shadow: none; background-color: currentColor; }
+  .chip[aria-pressed="true"] .sw { box-shadow: 0 0 0 2px var(--accent-ink); }
   td input::placeholder { color: var(--ink-2); opacity: .45; }
   td:focus-within:not(.rn):not(.act):not([colspan]) { box-shadow: inset 0 0 0 2px var(--focus); position: relative; z-index: 1; }
 
@@ -269,15 +286,15 @@
 
 <header>
   <h1>Contatti Clienti</h1>
-  <input class="search" id="q" type="search" placeholder="Cerca nome, cognome, motivo…" autocomplete="off" aria-label="Cerca">
+  <input class="search" id="q" type="search" placeholder="Cerca cliente, motivo…" autocomplete="off" aria-label="Cerca">
   <span class="grow"></span>
   <button class="primary" id="add">＋ Nuovo cliente</button>
   <button id="more" aria-haspopup="menu" aria-label="Altre azioni">•••</button>
 </header>
 
 <div class="filters">
-  <div class="chips" id="chips" role="toolbar" aria-label="Filtri"></div>
-  <span class="grow"></span>
+  <div class="chips" id="chips" role="toolbar" aria-label="Filtra per esito"></div>
+  <div class="view">
   <label class="order">Ordina
     <select id="order">
       <option value="vicini">Più vicini a oggi</option>
@@ -286,27 +303,28 @@
     </select>
   </label>
   <button id="foldAll"></button>
+  </div>
 </div>
 
 <main id="sheet">
   <table>
     <colgroup>
-      <col style="width:48px">
-      <col style="width:15%"><col style="width:15%">
-      <col style="width:160px"><col style="width:110px">
+      <col style="width:44px">
+      <col style="width:17%">
+      <col style="width:238px">
       <col>
-      <col style="width:200px">
-      <col style="width:56px">
+      <col style="width:168px">
+      <col style="width:238px">
+      <col style="width:52px">
     </colgroup>
     <thead>
       <tr>
         <th class="rn" aria-label="Riga"></th>
-        <th>Nome</th>
-        <th>Cognome</th>
-        <th>Giorno</th>
-        <th>Orario</th>
-        <th>Motivo del contatto</th>
+        <th>Cliente</th>
+        <th>Primo contatto</th>
+        <th>Motivo</th>
         <th>Esito</th>
+        <th>Richiamo / Appunt.</th>
         <th class="act" aria-label="Azioni"></th>
       </tr>
     </thead>
@@ -335,17 +353,22 @@
 
   const KEY = 'contatti-clienti:v1';
   const UIKEY = 'contatti-clienti:ui';
-  const FIELDS = ['nome', 'cognome', 'giorno', 'orario', 'motivo', 'esito'];
+  const FIELDS = ['cliente', 'giorno', 'orario', 'motivo', 'esito', 'prossimoGiorno', 'prossimoOrario'];
+  const DATE_FIELDS = new Set(['giorno', 'orario', 'prossimoGiorno', 'prossimoOrario']);
   const ESITI = [
-    { v: '',             cls: 'e-none',     label: '—' },
-    { v: 'Da contattare', cls: 'e-todo',     label: 'Da contattare' },
-    { v: 'Richiamare',   cls: 'e-callback', label: 'Richiamare' },
-    { v: 'Non risponde', cls: 'e-noanswer', label: 'Non risponde' },
-    { v: 'Appuntamento', cls: 'e-appt',     label: 'Appuntamento' },
-    { v: 'Positivo',     cls: 'e-ok',       label: 'Positivo' },
-    { v: 'Negativo',     cls: 'e-ko',       label: 'Negativo' },
+    { v: '',                cls: 'e-none',     label: '—' },
+    { v: 'Da contattare',   cls: 'e-todo',     label: 'Da contattare' },
+    { v: 'Da richiamare',   cls: 'e-callback', label: 'Da richiamare' },
+    { v: 'Non risponde',    cls: 'e-noanswer', label: 'Non risponde' },
+    { v: 'Appuntamento',    cls: 'e-appt',     label: 'Appuntamento' },
+    { v: 'Non interessato', cls: 'e-ko',       label: 'Non interessato' },
   ];
-  const OPEN = new Set(['', 'Da contattare', 'Richiamare', 'Non risponde']);
+  // Esiti che richiedono una data/ora (richiamo o appuntamento)
+  const NEEDS_DATE = new Set(['Da richiamare', 'Appuntamento']);
+  // Esiti ancora "da gestire": se la data è passata diventano in ritardo
+  const OPEN = new Set(['', 'Da contattare', 'Da richiamare', 'Non risponde']);
+  // Nomi delle versioni precedenti
+  const RENAMED = { 'Negativo': 'Non interessato', 'Richiamare': 'Da richiamare' };
 
   const $ = (s) => document.querySelector(s);
   const tbody = $('#rows');
@@ -394,7 +417,10 @@
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
   function normalize(r) {
     const o = { id: r.id || uid() };
-    for (const f of FIELDS) o[f] = (r[f] ?? '').toString();
+    for (const f of FIELDS) o[f] = (r[f] ?? '').toString().trim();
+    // Versione precedente: nome e cognome erano separati
+    if (!o.cliente && (r.nome || r.cognome)) o.cliente = [r.nome, r.cognome].filter(Boolean).join(' ').trim();
+    o.esito = RENAMED[o.esito] ?? o.esito;
     o.creato = r.creato || new Date().toISOString();
     o.modificato = r.modificato || o.creato;
     return o;
@@ -408,35 +434,43 @@
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
+  // Giorno in agenda: la data di richiamo/appuntamento se c'è, altrimenti il primo contatto
+  const viaNext = (r) => NEEDS_DATE.has(r.esito) && !!r.prossimoGiorno;
+  const effDay = (r) => viaNext(r) ? r.prossimoGiorno : r.giorno;
+  const effTime = (r) => viaNext(r) ? r.prossimoOrario : r.orario;
+  const slot = (r) => (effDay(r) || '') + '|' + (effTime(r) || '');
+
   function status(r) {
-    if (!r.giorno || !OPEN.has(r.esito)) return '';
+    const d = effDay(r);
+    if (!d || r.esito === 'Non interessato') return '';
     const t = todayStr();
-    if (r.giorno === t) return 'today';
-    if (r.giorno < t) return 'late';
+    if (d === t) return 'today';
+    if (d < t && OPEN.has(r.esito)) return 'late';
     return '';
   }
+  function rowClass(r) {
+    return [status(r), NEEDS_DATE.has(r.esito) && 'need', viaNext(r) && 'via-next'].filter(Boolean).join(' ');
+  }
 
-  const FILTERS = [
-    { id: 'tutti',  label: 'Tutti',          test: () => true },
-    { id: 'oggi',   label: 'Da fare oggi',   test: r => status(r) === 'today' },
-    { id: 'ritardo',label: 'In ritardo',     test: r => status(r) === 'late' },
-    { id: 'aperti', label: 'Aperti',         test: r => OPEN.has(r.esito) },
-    { id: 'chiusi', label: 'Chiusi',         test: r => !OPEN.has(r.esito) },
-  ];
+  const FILTERS = [{ id: 'tutti', label: 'Tutti', test: () => true }]
+    .concat(ESITI.filter(e => e.v).map(e => ({ id: e.v, label: e.label, cls: e.cls, test: r => r.esito === e.v })));
 
   function filteredRows() {
     const q = query.trim().toLowerCase();
-    const f = FILTERS.find(x => x.id === filter).test;
-    return rows.filter(r => f(r) && (!q || (r.nome + ' ' + r.cognome + ' ' + r.motivo + ' ' + r.esito).toLowerCase().includes(q)));
+    const f = (FILTERS.find(x => x.id === filter) || FILTERS[0]).test;
+    return rows.filter(r => f(r) && (!q || (r.cliente + ' ' + r.motivo + ' ' + r.esito).toLowerCase().includes(q)));
   }
 
   // ---------- Raggruppamento per giorno ----------
-  const byTime = (a, b) => (!a.orario) - (!b.orario) || a.orario.localeCompare(b.orario) || a.creato.localeCompare(b.creato);
+  const byTime = (a, b) => {
+    const x = effTime(a) || '', y = effTime(b) || '';
+    return (!x) - (!y) || x.localeCompare(y) || a.creato.localeCompare(b.creato);
+  };
 
   function groupRows(list) {
     const map = new Map();
     for (const r of list) {
-      const k = r.giorno || '';
+      const k = effDay(r) || '';
       if (!map.has(k)) map.set(k, []);
       map.get(k).push(r);
     }
@@ -455,7 +489,7 @@
     return keys.map(day => ({ day, rows: map.get(day) }));
   }
 
-  // Compresso? Scelta dell'utente se c'è; altrimenti sono chiusi solo i giorni passati già tutti conclusi
+  // Compresso? Scelta dell'utente se c'è; altrimenti sono chiusi solo i giorni passati senza nulla da gestire
   function isCollapsed(g) {
     if (query.trim()) return false;
     if (g.day in ui.collapsed) return ui.collapsed[g.day];
@@ -484,17 +518,20 @@
   function dayEl(g, collapsed) {
     const info = dayInfo(g.day);
     const late = g.rows.filter(r => status(r) === 'late').length;
-    const open = g.rows.filter(r => OPEN.has(r.esito)).length;
+    const count = (v) => g.rows.filter(r => r.esito === v).length;
+    const calls = count('Da richiamare'), appts = count('Appuntamento');
     const tr = document.createElement('tr');
     tr.className = 'day' + (info.diff === 0 ? ' is-today' : '') + (info.diff < 0 ? ' is-past' : '');
     tr.dataset.day = g.day;
-    tr.innerHTML = `<td colspan="8"><button class="day-btn" aria-expanded="${!collapsed}"${query.trim() ? ' disabled' : ''}>
+    tr.innerHTML = `<td colspan="7"><button class="day-btn" aria-expanded="${!collapsed}"${query.trim() ? ' disabled' : ''}>
       <span class="day-in">
         <span class="chev" aria-hidden="true">›</span>
         <span class="day-name"></span>
         <span class="day-rel"></span>
         <span class="pill">${g.rows.length} ${g.rows.length === 1 ? 'contatto' : 'contatti'}</span>
-        ${late ? `<span class="pill late">${late} in ritardo</span>` : open && info.diff !== null && info.diff >= 0 ? `<span class="pill open">${open} da fare</span>` : ''}
+        ${calls ? `<span class="pill e-callback">${calls} ${calls === 1 ? 'richiamo' : 'richiami'}</span>` : ''}
+        ${appts ? `<span class="pill e-appt">${appts} ${appts === 1 ? 'appuntamento' : 'appuntamenti'}</span>` : ''}
+        ${late ? `<span class="pill late">${late} in ritardo</span>` : ''}
       </span></button></td>`;
     tr.querySelector('.day-name').textContent = info.name;
     tr.querySelector('.day-rel').textContent = info.rel;
@@ -504,18 +541,25 @@
   function rowEl(r, n) {
     const tr = document.createElement('tr');
     tr.dataset.id = r.id;
-    tr.className = status(r);
+    tr.className = rowClass(r);
     tr.innerHTML = `
       <td class="rn">${n}</td>
-      <td><input data-f="nome" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Nome"></td>
-      <td><input data-f="cognome" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Cognome"></td>
-      <td><input data-f="giorno" type="date"></td>
-      <td><input data-f="orario" type="time"></td>
+      <td><input data-f="cliente" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Nome e cognome"></td>
+      <td class="first"><div class="dt-in">
+        <input data-f="giorno" type="date" aria-label="Data primo contatto">
+        <input data-f="orario" type="time" aria-label="Ora primo contatto">
+      </div></td>
       <td><input data-f="motivo" autocapitalize="sentences" autocomplete="off" enterkeyhint="next" placeholder="Motivo del contatto"></td>
-      <td><select data-f="esito" class="esito"></select></td>
+      <td><select data-f="esito" class="esito" aria-label="Esito"></select></td>
+      <td class="next"><div class="dt-in">
+        <input data-f="prossimoGiorno" type="date" aria-label="Data richiamo o appuntamento">
+        <input data-f="prossimoOrario" type="time" aria-label="Ora richiamo o appuntamento">
+      </div><span class="na">—</span></td>
       <td class="act"><button class="del" aria-label="Elimina riga">✕</button></td>`;
     const sel = tr.querySelector('select');
     for (const e of ESITI) sel.add(new Option(e.label, e.v));
+    // Valore non più in elenco (es. "Positivo" di versioni vecchie): mostralo comunque, non perdere il dato
+    if (!ESITI.some(e => e.v === r.esito)) sel.add(new Option(r.esito, r.esito));
     for (const f of FIELDS) tr.querySelector(`[data-f="${f}"]`).value = r[f];
     sel.className = 'esito ' + esitoCls(r.esito);
     return tr;
@@ -554,7 +598,7 @@
       const b = document.createElement('button');
       b.className = 'chip';
       b.setAttribute('aria-pressed', String(filter === f.id));
-      b.innerHTML = `${f.label} <span class="n">${rows.filter(f.test).length}</span>`;
+      b.innerHTML = `${f.cls ? `<i class="sw ${f.cls}"></i>` : ''}${f.label} <span class="n">${rows.filter(f.test).length}</span>`;
       b.onclick = () => { filter = f.id; render(); };
       return b;
     }));
@@ -565,7 +609,7 @@
     const late = rows.filter(r => status(r) === 'late').length;
     $('#stats').innerHTML = `
       <span><b>${rows.length}</b> clienti</span>
-      <span><i class="dot" style="background:var(--today)"></i><b>${today}</b> da contattare oggi</span>
+      <span><i class="dot" style="background:var(--today)"></i><b>${today}</b> da gestire oggi</span>
       <span><i class="dot" style="background:var(--late)"></i><b>${late}</b> in ritardo</span>
       <span class="grow"></span>
       <span>Salvato su questo dispositivo</span>`;
@@ -579,49 +623,76 @@
 
   // Aggiorna colori, intestazione del giorno e contatori senza ridisegnare la tabella (non perde il focus)
   function refreshRow(tr, r) {
-    tr.className = status(r);
+    tr.className = rowClass(r);
     const h = headerOf(tr);
     if (h) {
       const day = h.dataset.day;
-      const g = { day, rows: filteredRows().filter(x => (x.giorno || '') === day && x.id !== r.id).concat(r) };
+      const g = { day, rows: filteredRows().filter(x => (effDay(x) || '') === day && x.id !== r.id).concat(r) };
       h.replaceWith(dayEl(g, false));
     }
     renderFilters();
     renderStats();
   }
 
-  // ---------- Editing ----------
-  const byId = (id) => rows.find(r => r.id === id);
-  let moved = null; // riga a cui è cambiato giorno/orario: va riposizionata quando si esce dal campo
-
-  function onEdit(e) {
-    const el = e.target, tr = el.closest('tr');
-    if (!el.dataset.f || !tr) return;
-    const r = byId(tr.dataset.id);
-    if (!r || r[el.dataset.f] === el.value) return;
-    r[el.dataset.f] = el.value;
-    r.modificato = new Date().toISOString();
-    if (el.tagName === 'SELECT') el.className = 'esito ' + esitoCls(el.value);
-    if (el.dataset.f === 'giorno' || el.dataset.f === 'orario') moved = r.id;
-    refreshRow(tr, r);
-    save();
-  }
-  tbody.addEventListener('input', onEdit);
-  tbody.addEventListener('change', onEdit);
-
-  tbody.addEventListener('focusout', (e) => {
-    const f = e.target.dataset?.f;
-    if (!moved || (f !== 'giorno' && f !== 'orario')) return;
-    const id = moved; moved = null;
-    const next = e.relatedTarget, nextId = next?.closest?.('tr')?.dataset.id, nextF = next?.dataset?.f;
+  // Ridisegna e mette in evidenza una riga (dopo che si è spostata in un altro giorno)
+  function renderAndShow(id, scroll = true) {
     const r = byId(id);
-    if (r) ui.collapsed[r.giorno] = false, saveUI(); // il giorno di destinazione si apre per mostrare la riga
+    if (r) { ui.collapsed[effDay(r) || ''] = false; saveUI(); } // il giorno di destinazione si apre
     render();
     const tr = tbody.querySelector(`tr[data-id="${id}"]`);
     if (tr) {
       tr.classList.add('flash');
-      if (!nextId || nextId === id) tr.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      if (scroll) tr.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
+    return tr;
+  }
+
+  // ---------- Editing ----------
+  const byId = (id) => rows.find(r => r.id === id);
+  let moved = null; // riga a cui è cambiata la data in agenda: va riposizionata quando si esce dal campo
+
+  function onEdit(e) {
+    const el = e.target, tr = el.closest('tr'), f = el.dataset.f;
+    if (!f || !tr) return;
+    const r = byId(tr.dataset.id);
+    if (!r || r[f] === el.value) return;
+    const before = slot(r);
+    r[f] = el.value;
+    r.modificato = new Date().toISOString();
+    save();
+
+    if (f === 'esito') {
+      el.className = 'esito ' + esitoCls(el.value);
+      const needsDate = NEEDS_DATE.has(r.esito) && !r.prossimoGiorno;
+      if (slot(r) !== before) {
+        // L'esito sposta la riga in un altro giorno: ridisegna subito
+        const row = renderAndShow(r.id);
+        if (needsDate) askDate(row);
+      } else {
+        refreshRow(tr, r);
+        if (needsDate) askDate(tr);
+      }
+      return;
+    }
+    if (DATE_FIELDS.has(f) && slot(r) !== before) moved = r.id;
+    refreshRow(tr, r);
+  }
+  tbody.addEventListener('input', onEdit);
+  tbody.addEventListener('change', onEdit);
+
+  // Dopo "Da richiamare" o "Appuntamento" porta subito sul campo data
+  function askDate(tr) {
+    const d = tr?.querySelector('[data-f="prossimoGiorno"]');
+    if (!d) return;
+    d.focus({ preventScroll: true });
+    try { d.showPicker(); } catch {}
+  }
+
+  tbody.addEventListener('focusout', (e) => {
+    if (!moved || !DATE_FIELDS.has(e.target.dataset?.f)) return;
+    const id = moved; moved = null;
+    const next = e.relatedTarget, nextId = next?.closest?.('tr')?.dataset.id, nextF = next?.dataset?.f;
+    renderAndShow(id, !nextId || nextId === id);
     if (nextId && nextF) tbody.querySelector(`tr[data-id="${nextId}"] [data-f="${nextF}"]`)?.focus({ preventScroll: nextId === id });
   });
 
@@ -633,7 +704,7 @@
     let next = e.target.closest('tr').nextElementSibling;
     while (next && next.classList.contains('day')) next = next.nextElementSibling;
     if (next) next.querySelector(`[data-f="${f}"]`).focus();
-    else if (f === 'nome' || f === 'cognome' || f === 'motivo') addRow(f);
+    else if (f === 'cliente' || f === 'motivo') addRow(f);
     else e.target.blur();
   });
 
@@ -652,14 +723,13 @@
     if (idx < 0) return;
     const [removed] = rows.splice(idx, 1);
     saveNow(); render();
-    const name = [removed.nome, removed.cognome].filter(Boolean).join(' ') || 'Riga';
-    toast(`${name} eliminato`, 'Annulla', () => {
+    toast(`${removed.cliente || 'Riga'} eliminato`, 'Annulla', () => {
       rows.splice(Math.min(idx, rows.length), 0, removed);
       saveNow(); render();
     });
   });
 
-  function addRow(focusField = 'nome') {
+  function addRow(focusField = 'cliente') {
     const r = normalize({});
     rows.push(r);
     saveNow();
@@ -714,7 +784,16 @@
 
   // ---------- Export / Import ----------
   const stamp = () => todayStr();
-  const COLS = [['nome', 'Nome'], ['cognome', 'Cognome'], ['giorno', 'Giorno'], ['orario', 'Orario'], ['motivo', 'Motivo'], ['esito', 'Esito']];
+  // [campo, intestazione nel CSV, altri nomi accettati in importazione]
+  const COLS = [
+    ['cliente', 'Cliente', ['nome e cognome']],
+    ['giorno', 'Primo contatto', ['giorno', 'data']],
+    ['orario', 'Ora primo contatto', ['orario', 'ora']],
+    ['motivo', 'Motivo', ['motivo del contatto']],
+    ['esito', 'Esito', []],
+    ['prossimoGiorno', 'Richiamo/Appuntamento', ['richiamo / appuntamento', 'data richiamo']],
+    ['prossimoOrario', 'Ora richiamo/appuntamento', ['ora richiamo / appuntamento', 'ora richiamo']],
+  ];
 
   function itDate(iso) { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; }
   function isoDate(s) {
@@ -725,19 +804,23 @@
     const y = m[3].length === 2 ? '20' + m[3] : m[3];
     return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   }
+  function isoTime(s) {
+    const t = (s || '').trim().match(/^(\d{1,2})[:.](\d{2})/);
+    return t ? `${t[1].padStart(2, '0')}:${t[2]}` : '';
+  }
 
   function exportCSV() {
     pruneEmpty();
     // Punto e virgola + BOM UTF-8: Excel in italiano lo apre già diviso in colonne con gli accenti corretti
     const esc = (v) => /[";\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
     const lines = [COLS.map(c => c[1]).join(';')];
-    const sorted = rows.slice().sort((a, b) => (a.giorno || '9999').localeCompare(b.giorno || '9999') || byTime(a, b));
-    for (const r of sorted) lines.push(COLS.map(([k]) => esc(k === 'giorno' ? itDate(r[k]) : r[k])).join(';'));
+    const sorted = rows.slice().sort((a, b) => (effDay(a) || '9999').localeCompare(effDay(b) || '9999') || byTime(a, b));
+    for (const r of sorted) lines.push(COLS.map(([k]) => esc(k === 'giorno' || k === 'prossimoGiorno' ? itDate(r[k]) : r[k])).join(';'));
     share(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `contatti-clienti-${stamp()}.csv`);
   }
   function exportJSON() {
     pruneEmpty();
-    const data = { app: 'contatti-clienti', versione: 1, esportato: new Date().toISOString(), righe: rows };
+    const data = { app: 'contatti-clienti', versione: 2, esportato: new Date().toISOString(), righe: rows };
     share(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `contatti-clienti-backup-${stamp()}.json`);
   }
 
@@ -775,13 +858,15 @@
     if (cell || row.length) { row.push(cell); out.push(row); }
     if (!out.length) return [];
     const head = out.shift().map(h => h.trim().toLowerCase());
-    const idx = COLS.map(([k, label]) => head.findIndex(h => h === k || h === label.toLowerCase() || h.startsWith(k)));
+    const col = (names) => head.findIndex(h => names.includes(h));
+    const idx = COLS.map(([k, label, alias]) => col([k.toLowerCase(), label.toLowerCase(), ...alias]));
+    const iNome = col(['nome']), iCognome = col(['cognome']); // CSV della versione precedente
     return out.filter(r => r.some(c => c.trim())).map(r => {
       const o = {};
       COLS.forEach(([k], j) => { o[k] = idx[j] >= 0 ? (r[idx[j]] || '').trim() : ''; });
-      o.giorno = isoDate(o.giorno);
-      const t = o.orario.match(/^(\d{1,2})[:.](\d{2})/);
-      o.orario = t ? `${t[1].padStart(2, '0')}:${t[2]}` : '';
+      if (!o.cliente) o.cliente = [r[iNome], r[iCognome]].filter(Boolean).join(' ');
+      o.giorno = isoDate(o.giorno); o.prossimoGiorno = isoDate(o.prossimoGiorno);
+      o.orario = isoTime(o.orario); o.prossimoOrario = isoTime(o.prossimoOrario);
       return normalize(o);
     });
   }
@@ -835,6 +920,7 @@
   }, 60000);
 
   pruneEmpty();
+  if (rows.length) saveNow(); // salva subito i dati convertiti dal formato precedente
   render();
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
