@@ -129,7 +129,7 @@
     background: var(--sheet); box-shadow: var(--shadow);
     overflow: auto; -webkit-overflow-scrolling: touch;
   }
-  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1280px; table-layout: fixed; }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1210px; table-layout: fixed; }
   th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; }
   th:last-child, td:last-child { border-right: 0; }
   thead th {
@@ -321,7 +321,7 @@
     <colgroup>
       <col style="width:44px">
       <col style="width:190px">
-      <col style="width:234px">
+      <col style="width:164px">
       <col>
       <col style="width:168px">
       <col style="width:234px">
@@ -453,7 +453,7 @@
   // Giorno in agenda: la data di richiamo/appuntamento se c'è, altrimenti il primo contatto
   const viaNext = (r) => NEEDS_DATE.has(r.esito) && !!r.prossimoGiorno;
   const effDay = (r) => viaNext(r) ? r.prossimoGiorno : r.giorno;
-  const effTime = (r) => viaNext(r) ? r.prossimoOrario : r.orario;
+  const effTime = (r) => viaNext(r) ? r.prossimoOrario : ''; // il primo contatto ha solo la data
   const slot = (r) => (effDay(r) || '') + '|' + (effTime(r) || '');
 
   function status(r) {
@@ -565,7 +565,6 @@
       <td class="cli"><input data-f="cliente" autocapitalize="words" autocomplete="off" enterkeyhint="next" placeholder="Nome e cognome"></td>
       <td class="first"><div class="dt-in">
         <input data-f="giorno" type="date" aria-label="Data primo contatto">
-        <select data-f="orario" class="time" aria-label="Ora primo contatto"></select>
       </div></td>
       <td><input data-f="motivo" autocapitalize="sentences" autocomplete="off" enterkeyhint="next" placeholder="Motivo del contatto"></td>
       <td><select data-f="esito" class="esito" aria-label="Esito"></select></td>
@@ -580,7 +579,7 @@
     // Valore non più in elenco (es. "Positivo" di versioni vecchie): mostralo comunque, non perdere il dato
     if (!ESITI.some(e => e.v === r.esito)) sel.add(new Option(r.esito, r.esito));
     for (const t of tr.querySelectorAll('select.time')) fillTimes(t, r[t.dataset.f]);
-    for (const f of FIELDS) tr.querySelector(`[data-f="${f}"]`).value = r[f];
+    for (const f of FIELDS) { const el = tr.querySelector(`[data-f="${f}"]`); if (el) el.value = r[f]; }
     tr.querySelectorAll('select.time').forEach(markEmpty);
     sel.className = 'esito ' + esitoCls(r.esito);
     return tr;
@@ -814,7 +813,6 @@
   const COLS = [
     ['cliente', 'Cliente', ['nome e cognome']],
     ['giorno', 'Primo contatto', ['giorno', 'data']],
-    ['orario', 'Ora primo contatto', ['orario', 'ora']],
     ['motivo', 'Motivo', ['motivo del contatto']],
     ['esito', 'Esito', []],
     ['prossimoGiorno', 'Richiamo/Appuntamento', ['richiamo / appuntamento', 'data richiamo']],
